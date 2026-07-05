@@ -317,9 +317,9 @@ app.post('/generate-pdf', async (req, res) => {
       <tr>
         <th style="width:11%">${L[0]}</th>
         <th style="width:30%">${L[1]}</th>
-        <th style="width:7%" class="num">数量</th>
-        <th style="width:13%" class="num">単価</th>
-        <th style="width:14%" class="num">金額</th>
+        <th style="width:7%" class="num">${L[2]}</th>
+        <th style="width:13%" class="num">${L[3]}</th>
+        <th style="width:14%" class="num">${L[4]}</th>
         <th style="width:7%" class="num">税率</th>
         <th style="width:18%">${L[5]}</th>
       </tr>
