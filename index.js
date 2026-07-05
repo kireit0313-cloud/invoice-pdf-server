@@ -55,7 +55,7 @@ function buildTaxGroups(items) {
 
 // PDF生成エンドポイント
 app.post('/generate-pdf', async (req, res) => {
-  const { clientName, items, docType, companyInfo, projectFields, issueDate: issueDateInput, honorific: honorificInput } = req.body;
+  const { clientName, items, docType, companyInfo, projectFields, issueDate: issueDateInput, honorific: honorificInput, columnLabels } = req.body;
 
   if (!clientName || !items) {
     return res.status(400).json({ error: 'clientName と items は必須です' });
@@ -63,6 +63,10 @@ app.post('/generate-pdf', async (req, res) => {
 
   const title = docType === '見積書' ? '見積書' : '請求書';
   const company = companyInfo || {};
+
+  // 明細ラベル（クライアント別カスタマイズ、未指定時はデフォルト）
+  const defaultLabels = ['作業日', 'サービス名', '数量', '単価（円）', '金額（円）', '備考'];
+  const L = (columnLabels && columnLabels.length === 6) ? columnLabels : defaultLabels;
 
   // 会社情報ブロック（社名・住所・電話・インボイス番号）
   const customFieldsHtml = (company.customFields || [])
@@ -311,13 +315,13 @@ app.post('/generate-pdf', async (req, res) => {
   <table>
     <thead>
       <tr>
-        <th style="width:11%">日付</th>
-        <th style="width:30%">内容</th>
+        <th style="width:11%">${L[0]}</th>
+        <th style="width:30%">${L[1]}</th>
         <th style="width:7%" class="num">数量</th>
         <th style="width:13%" class="num">単価</th>
         <th style="width:14%" class="num">金額</th>
         <th style="width:7%" class="num">税率</th>
-        <th style="width:18%">備考</th>
+        <th style="width:18%">${L[5]}</th>
       </tr>
     </thead>
     <tbody>
