@@ -55,7 +55,7 @@ function buildTaxGroups(items) {
 
 // PDF生成エンドポイント
 app.post('/generate-pdf', async (req, res) => {
-  const { clientName, items, docType, companyInfo, projectFields, remarksLower, issueDate: issueDateInput, honorific: honorificInput, columnLabels } = req.body;
+  const { clientName, items, docType, companyInfo, projectFields, issueDate: issueDateInput, honorific: honorificInput, columnLabels } = req.body;
 
   if (!clientName || !items) {
     return res.status(400).json({ error: 'clientName と items は必須です' });
@@ -96,11 +96,6 @@ app.post('/generate-pdf', async (req, res) => {
 
   const projectInfoBlockHtml = projectFieldsHtml
     ? `<div class="project-info">${projectFieldsHtml}</div>`
-    : '';
-
-  // 自由記入欄（下段）：未記入なら非表示
-  const remarksLowerBlockHtml = (remarksLower && remarksLower.trim())
-    ? `<div class="remarks-lower">${remarksLower.trim().replace(/\n/g, '<br>')}</div>`
     : '';
 
   // 明細行のHTML生成
@@ -240,17 +235,6 @@ app.post('/generate-pdf', async (req, res) => {
   }
   .project-field-label { min-width: 110px; color: #718096; }
   .project-field-value { color: #1A202C; }
-  .remarks-lower {
-    background: #F8F9FA;
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: -4px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: #1A202C;
-    line-height: 1.6;
-  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -345,8 +329,6 @@ app.post('/generate-pdf', async (req, res) => {
     </tbody>
   </table>
 
-  ${remarksLowerBlockHtml}
-
   <div class="totals">
     ${totalRowsHtml}
     <div class="total-row" style="font-size:15px;font-weight:bold;color:#1A202C;border-top:2px solid #1A202C;padding-top:8px;margin-top:4px;">
@@ -365,8 +347,8 @@ app.post('/generate-pdf', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
