@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # PuppeteerのChromiumが動作するために必要な共有ライブラリ一式
 # (https://pptr.dev/troubleshooting の推奨構成に準拠)
