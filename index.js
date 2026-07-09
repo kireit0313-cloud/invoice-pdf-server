@@ -235,7 +235,7 @@ app.post('/generate-pdf', async (req, res) => {
     margin-top: 8px;
     padding: 3px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     overflow: hidden;
   }
