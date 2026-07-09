@@ -97,10 +97,14 @@ app.post('/generate-pdf', async (req, res) => {
       sealHtml = `<img class="seal-img" src="${seal.imageData}" alt="印">`;
     } else if (company.name) {
       // 自動生成角印：writing-mode縦書き（vertical-rl）で右→左・上→下に自動配置
+      // 文字数に応じて枠を自動拡大（1文字=15px目安、列数=√文字数）。上限80pxでフォント縮小。
       const n = [...String(company.name)].length;
       const grid = Math.ceil(Math.sqrt(n));
-      const fontPx = Math.max(6, Math.floor(44 / grid));
-      sealHtml = `<div class="seal-auto"><div class="seal-auto-text" style="font-size:${fontPx}px">${company.name}</div></div>`;
+      let cell = 15;
+      let box = grid * cell + 12; // 枠 = 内側(列数×cell) + padding4×2 + border2×2
+      if (box > 80) { box = 80; cell = Math.max(6, Math.floor((box - 12) / grid)); }
+      if (box < 44) { box = 44; }
+      sealHtml = `<div class="seal-auto" style="width:${box}px;height:${box}px"><div class="seal-auto-text" style="font-size:${cell}px">${company.name}</div></div>`;
     }
   }
 
@@ -227,27 +231,26 @@ app.post('/generate-pdf', async (req, res) => {
   }
   .company-name { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
   .seal-auto {
-    width: 58px;
-    height: 58px;
     border: 2px solid #C0392B;
     border-radius: 3px;
     margin-left: auto;
     margin-top: 8px;
-    padding: 3px;
+    padding: 4px;
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: center;
     overflow: hidden;
   }
   .seal-auto-text {
     writing-mode: vertical-rl;
     text-orientation: upright;
+    text-align: start;
     color: #C0392B;
     font-weight: bold;
     font-family: serif;
     line-height: 1.0;
     letter-spacing: 0;
-    max-height: 100%;
+    height: 100%;
   }
   .seal-img {
     width: 58px;
