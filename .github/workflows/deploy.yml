@@ -1,0 +1,31 @@
+name: Deploy to Cloud Run
+
+# mainブランチにpush（Upload/コミット）されたら自動でデプロイする
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Google Cloud認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: gcloudセットアップ
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Cloud Runへデプロイ
+        run: |
+          gcloud run deploy invoice-pdf-server \
+            --source . \
+            --project idea-notebook-172e0 \
+            --region asia-northeast1 \
+            --allow-unauthenticated \
+            --memory 1Gi \
+            --execution-environment gen2
