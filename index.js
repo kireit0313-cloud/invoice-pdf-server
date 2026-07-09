@@ -114,12 +114,12 @@ app.post('/generate-pdf', async (req, res) => {
     ? `<div class="project-info">${projectFieldsHtml}</div>`
     : '';
 
-  // 自由記入欄（下段）：未記入なら非表示
+  // 自由記入欄（下段）：未記入なら非表示。PDFでは最下部（振込先の下）に表示する
   const remarksLowerBlockHtml = (remarksLower && remarksLower.trim())
     ? `<div class="remarks-lower">${remarksLower.trim().replace(/\n/g, '<br>')}</div>`
     : '';
 
-  // 明細行のHTML生成
+  // 明細行のHTML生成（税率が0または未設定のときは空欄にする）
   const itemRows = items.map(item => `
     <tr>
       <td>${item.workDate || ''}</td>
@@ -127,7 +127,7 @@ app.post('/generate-pdf', async (req, res) => {
       <td class="num">${item.qty === null || item.qty === undefined ? '' : item.qty}</td>
       <td class="num">${item.price === null || item.price === undefined ? '' : '¥' + Number(item.price).toLocaleString()}</td>
       <td class="num">¥${Number(item.amount || 0).toLocaleString()}</td>
-      <td class="num">${item.taxRate ? item.taxRate + '%' : ''}</td>
+      <td class="num">${Number(item.taxRate) > 0 ? Number(item.taxRate) + '%' : ''}</td>
       <td>${item.remark || ''}</td>
     </tr>
   `).join('');
@@ -261,8 +261,8 @@ app.post('/generate-pdf', async (req, res) => {
     border: 1px solid #E2E8F0;
     border-radius: 8px;
     padding: 12px 16px;
-    margin-top: -4px;
-    margin-bottom: 20px;
+    margin-top: 20px;
+    margin-bottom: 0;
     font-size: 13px;
     color: #1A202C;
     line-height: 1.6;
@@ -361,8 +361,6 @@ app.post('/generate-pdf', async (req, res) => {
     </tbody>
   </table>
 
-  ${remarksLowerBlockHtml}
-
   <div class="totals">
     ${totalRowsHtml}
     <div class="total-row" style="font-size:15px;font-weight:bold;color:#1A202C;border-top:2px solid #1A202C;padding-top:8px;margin-top:4px;">
@@ -376,6 +374,8 @@ app.post('/generate-pdf', async (req, res) => {
     <div class="bank-info-title">お振込先</div>
     <div class="bank-info-body">${company.bankInfo.replace(/\n/g, '<br>')}</div>
   </div>` : ''}
+
+  ${remarksLowerBlockHtml}
 </body>
 </html>`;
 
