@@ -96,13 +96,18 @@ app.post('/generate-pdf', async (req, res) => {
     </div>`;
 
   // 案件情報・送付先情報ブロック（会社情報とは独立、クライアント名の下に表示）
+  // 項目名（label）が空欄でも、内容（value）があればフリー記入として表示する
   const projectFieldsHtml = (projectFields || [])
-    .filter(f => f && f.label && f.value)
-    .map(f => `
+    .filter(f => f && (f.label || f.value))
+    .map(f => {
+      const label = (f.label || '').trim();
+      const value = f.value || '';
+      return `
       <div class="project-field-row">
-        <span class="project-field-label">${f.label}</span>
-        <span class="project-field-value">${f.value}</span>
-      </div>`)
+        ${label ? `<span class="project-field-label">${label}</span>` : ''}
+        <span class="project-field-value">${value}</span>
+      </div>`;
+    })
     .join('');
 
   const projectInfoBlockHtml = projectFieldsHtml
@@ -122,7 +127,7 @@ app.post('/generate-pdf', async (req, res) => {
       <td class="num">${item.qty === null || item.qty === undefined ? '' : item.qty}</td>
       <td class="num">${item.price === null || item.price === undefined ? '' : '¥' + Number(item.price).toLocaleString()}</td>
       <td class="num">¥${Number(item.amount || 0).toLocaleString()}</td>
-      <td class="num">${item.taxRate || 0}%</td>
+      <td class="num">${item.taxRate ? item.taxRate + '%' : ''}</td>
       <td>${item.remark || ''}</td>
     </tr>
   `).join('');
