@@ -68,19 +68,30 @@ app.post('/generate-pdf', async (req, res) => {
   const defaultLabels = ['作業日', 'サービス名', '数量', '単価（円）', '金額（円）', '備考'];
   const L = (columnLabels && columnLabels.length === 6) ? columnLabels : defaultLabels;
 
-  // 会社情報ブロック（社名・住所・電話・インボイス番号）
-  const customFieldsHtml = (company.customFields || [])
-    .filter(f => f && f.label && f.value)
-    .map(f => `<div>${f.label}：${f.value}</div>`)
+  // 会社情報ブロック（社名＋並び順どおりの項目リスト）
+  // 新形式：company.fields = [{label, value}, ...]（UIの並び順＝表示順）
+  // 旧形式（fields未設定）：住所→TEL→登録番号→追加項目 の順に自動変換し、従来の見た目を維持
+  const companyFields = Array.isArray(company.fields)
+    ? company.fields
+    : [
+        { label: '', value: company.address || '' },
+        { label: 'TEL', value: company.tel || '' },
+        { label: '登録番号', value: company.invoiceNumber || '' },
+        ...(company.customFields || []),
+      ];
+  const companyFieldsHtml = companyFields
+    .filter(f => f && f.value != null && String(f.value).trim() !== '')
+    .map(f => {
+      const label = (f.label || '').trim();
+      const value = String(f.value).replace(/\n/g, '<br>');
+      return `<div>${label ? label + '：' : ''}${value}</div>`;
+    })
     .join('');
 
   const companyBlockHtml = `
     <div class="company-side">
       ${company.name ? `<div class="company-name">${company.name}</div>` : ''}
-      ${company.address ? `<div>${company.address}</div>` : ''}
-      ${company.tel ? `<div>TEL：${company.tel}</div>` : ''}
-      ${company.invoiceNumber ? `<div>登録番号：${company.invoiceNumber}</div>` : ''}
-      ${customFieldsHtml}
+      ${companyFieldsHtml}
       <div class="stamp-box">印</div>
     </div>`;
 
