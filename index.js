@@ -88,11 +88,27 @@ app.post('/generate-pdf', async (req, res) => {
     })
     .join('');
 
+  // 印鑑（角印）: クライアント単位設定。company.seal = { enabled, mode:'auto'|'image', imageData }
+  // 未設定（seal無し）の場合は非表示（従来の空円プレースホルダーは廃止）
+  const seal = company.seal || {};
+  let sealHtml = '';
+  if (seal.enabled) {
+    if (seal.mode === 'image' && seal.imageData) {
+      sealHtml = `<img class="seal-img" src="${seal.imageData}" alt="印">`;
+    } else if (company.name) {
+      // 自動生成角印：writing-mode縦書き（vertical-rl）で右→左・上→下に自動配置
+      const n = [...String(company.name)].length;
+      const grid = Math.ceil(Math.sqrt(n));
+      const fontPx = Math.max(6, Math.floor(44 / grid));
+      sealHtml = `<div class="seal-auto"><div class="seal-auto-text" style="font-size:${fontPx}px">${company.name}</div></div>`;
+    }
+  }
+
   const companyBlockHtml = `
     <div class="company-side">
       ${company.name ? `<div class="company-name">${company.name}</div>` : ''}
       ${companyFieldsHtml}
-      <div class="stamp-box">印</div>
+      ${sealHtml}
     </div>`;
 
   // 案件情報・送付先情報ブロック（会社情報とは独立、クライアント名の下に表示）
@@ -210,18 +226,36 @@ app.post('/generate-pdf', async (req, res) => {
     text-align: right;
   }
   .company-name { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
-  .stamp-box {
-    width: 56px;
-    height: 56px;
-    border: 1px solid #718096;
-    border-radius: 50%;
+  .seal-auto {
+    width: 58px;
+    height: 58px;
+    border: 2px solid #C0392B;
+    border-radius: 3px;
     margin-left: auto;
     margin-top: 8px;
+    padding: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #CBD5E0;
-    font-size: 12px;
+    overflow: hidden;
+  }
+  .seal-auto-text {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    color: #C0392B;
+    font-weight: bold;
+    font-family: serif;
+    line-height: 1.0;
+    letter-spacing: 0;
+    max-height: 100%;
+  }
+  .seal-img {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    margin-left: auto;
+    margin-top: 8px;
+    display: block;
   }
   .total-highlight {
     border: 2px solid #1A202C;
