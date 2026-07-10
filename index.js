@@ -208,8 +208,8 @@ app.post('/generate-pdf', async (req, res) => {
   const tintBg = toHex(mix(brandRgb, white, 0.90));     // うすい背景色
   const tintBorder = toHex(mix(brandRgb, white, 0.65)); // うすい枠線色
   const themeVars = themeMode === 'color'
-    ? `--c-title:${brand};--c-underline:${brand};--c-hl-border:${brand};--c-hl-bg:${tintBg};--c-hl-text:${brand};--c-th-bg:${brand};--c-th-text:#ffffff;--c-th-border:${brand};--c-box-bg:${tintBg};--c-box-border:${tintBorder};--c-box-label:${brand};--c-section-title:${brand};--c-total-line:${brand};`
-    : `--c-title:#1A202C;--c-underline:#1A202C;--c-hl-border:#1A202C;--c-hl-bg:transparent;--c-hl-text:#1A202C;--c-th-bg:#F8F9FA;--c-th-text:#718096;--c-th-border:#E2E8F0;--c-box-bg:#F8F9FA;--c-box-border:#E2E8F0;--c-box-label:#718096;--c-section-title:#1A202C;--c-total-line:#1A202C;`;
+    ? `--c-underline:${brand};--c-hl-border:${brand};--c-hl-bg:${tintBg};--c-hl-text:${brand};--c-th-bg:${brand};--c-th-text:#ffffff;--c-th-border:${brand};--c-box-bg:${tintBg};--c-box-border:${tintBorder};--c-box-label:${brand};--c-section-title:${brand};--c-total-line:${brand};--c-free-bg:#ffffff;--c-free-border:${brand};--c-free-label:${brand};`
+    : `--c-underline:#1A202C;--c-hl-border:#1A202C;--c-hl-bg:transparent;--c-hl-text:#1A202C;--c-th-bg:#F8F9FA;--c-th-text:#718096;--c-th-border:#E2E8F0;--c-box-bg:#F8F9FA;--c-box-border:#E2E8F0;--c-box-label:#718096;--c-section-title:#1A202C;--c-total-line:#1A202C;--c-free-bg:#F8F9FA;--c-free-border:#E2E8F0;--c-free-label:#718096;`;
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -231,7 +231,7 @@ app.post('/generate-pdf', async (req, res) => {
     text-align: center;
     margin-bottom: 24px;
     letter-spacing: 4px;
-    color: var(--c-title);
+    color: #1A202C;
   }
   .meta {
     display: flex;
@@ -319,8 +319,8 @@ app.post('/generate-pdf', async (req, res) => {
     color: var(--c-hl-text);
   }
   .project-info {
-    background: var(--c-box-bg);
-    border: 1px solid var(--c-box-border);
+    background: var(--c-free-bg);
+    border: 1px solid var(--c-free-border);
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 20px;
@@ -330,11 +330,11 @@ app.post('/generate-pdf', async (req, res) => {
     font-size: 13px;
     padding: 2px 0;
   }
-  .project-field-label { min-width: 110px; color: var(--c-box-label); }
+  .project-field-label { min-width: 110px; color: var(--c-free-label); }
   .project-field-value { color: #1A202C; }
   .remarks-lower {
-    background: var(--c-box-bg);
-    border: 1px solid var(--c-box-border);
+    background: var(--c-free-bg);
+    border: 1px solid var(--c-free-border);
     border-radius: 8px;
     padding: 12px 16px;
     margin-top: 20px;
@@ -351,11 +351,15 @@ app.post('/generate-pdf', async (req, res) => {
   th {
     background: var(--c-th-bg);
     border: 1px solid var(--c-th-border);
-    padding: 8px 10px;
+    padding: 8px 5px;
     text-align: left;
     font-weight: 500;
     color: var(--c-th-text);
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.25;
+    letter-spacing: -0.2px;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
   }
   td {
     border: 1px solid #E2E8F0;
@@ -424,13 +428,13 @@ app.post('/generate-pdf', async (req, res) => {
   <table>
     <thead>
       <tr>
-        <th style="width:11%">${L[0]}</th>
-        <th style="width:30%">${L[1]}</th>
-        <th style="width:7%" class="num">${L[2]}</th>
-        <th style="width:13%" class="num">${L[3]}</th>
-        <th style="width:14%" class="num">${L[4]}</th>
-        <th style="width:7%" class="num">税率</th>
-        <th style="width:18%">${L[5]}</th>
+        <th style="width:10%">${L[0]}</th>
+        <th style="width:28%">${L[1]}</th>
+        <th style="width:6%" class="num">${L[2]}</th>
+        <th style="width:15%" class="num">${L[3]}</th>
+        <th style="width:16%" class="num">${L[4]}</th>
+        <th style="width:6%" class="num">税率</th>
+        <th style="width:19%">${L[5]}</th>
       </tr>
     </thead>
     <tbody>
