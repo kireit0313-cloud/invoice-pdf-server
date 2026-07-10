@@ -345,6 +345,7 @@ app.post('/generate-pdf', async (req, res) => {
   }
   table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin-bottom: 16px;
   }
@@ -352,7 +353,7 @@ app.post('/generate-pdf', async (req, res) => {
     background: var(--c-th-bg);
     border: 1px solid var(--c-th-border);
     padding: 8px 5px;
-    text-align: left;
+    text-align: center;
     font-weight: 500;
     color: var(--c-th-text);
     font-size: 11px;
@@ -363,10 +364,11 @@ app.post('/generate-pdf', async (req, res) => {
   }
   td {
     border: 1px solid #E2E8F0;
-    padding: 8px 10px;
+    padding: 8px 6px;
     font-size: 13px;
+    overflow-wrap: anywhere;
   }
-  .num { text-align: right; }
+  td.num { text-align: right; }
   .totals {
     display: flex;
     flex-direction: column;
@@ -428,13 +430,13 @@ app.post('/generate-pdf', async (req, res) => {
   <table>
     <thead>
       <tr>
-        <th style="width:10%">${L[0]}</th>
-        <th style="width:28%">${L[1]}</th>
+        <th style="width:15%">${L[0]}</th>
+        <th style="width:31%">${L[1]}</th>
         <th style="width:6%" class="num">${L[2]}</th>
-        <th style="width:15%" class="num">${L[3]}</th>
-        <th style="width:16%" class="num">${L[4]}</th>
+        <th style="width:14%" class="num">${L[3]}</th>
+        <th style="width:14%" class="num">${L[4]}</th>
         <th style="width:6%" class="num">税率</th>
-        <th style="width:19%">${L[5]}</th>
+        <th style="width:14%">${L[5]}</th>
       </tr>
     </thead>
     <tbody>
