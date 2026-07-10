@@ -180,11 +180,43 @@ app.post('/generate-pdf', async (req, res) => {
 
   const honorific = (honorificInput === '様') ? '様' : '御中';
 
+  // カラーテーマ: company.theme = { mode:'gray'|'color', color:'#hex' }
+  // グレー時は従来の配色をそのまま維持。カラー時のみ会社カラーを一部要素に適用する。
+  const theme = company.theme || {};
+  const themeMode = (theme.mode === 'color' && theme.color) ? 'color' : 'gray';
+  const hexToRgb = (h) => {
+    let s = String(h).replace('#', '').trim();
+    if (s.length === 3) s = s.split('').map(c => c + c).join('');
+    const n = parseInt(s, 16);
+    if (!Number.isFinite(n)) return { r: 24, g: 95, b: 165 };
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  };
+  const toHex = (c) => {
+    const t = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+    return '#' + t(c.r) + t(c.g) + t(c.b);
+  };
+  const mix = (a, b, t) => ({ r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t });
+  const lum = (c) => {
+    const f = [c.r, c.g, c.b].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2];
+  };
+  // 会社カラーが明るすぎると白文字や白地の文字が読みにくいため、十分暗くなるまで黒を混ぜる
+  let brandRgb = hexToRgb(theme.color || '#185FA5');
+  for (let i = 0; i < 12 && lum(brandRgb) > 0.32; i++) brandRgb = mix(brandRgb, { r: 0, g: 0, b: 0 }, 0.12);
+  const white = { r: 255, g: 255, b: 255 };
+  const brand = toHex(brandRgb);
+  const tintBg = toHex(mix(brandRgb, white, 0.90));     // うすい背景色
+  const tintBorder = toHex(mix(brandRgb, white, 0.65)); // うすい枠線色
+  const themeVars = themeMode === 'color'
+    ? `--c-title:${brand};--c-underline:${brand};--c-hl-border:${brand};--c-hl-bg:${tintBg};--c-hl-text:${brand};--c-th-bg:${brand};--c-th-text:#ffffff;--c-th-border:${brand};--c-box-bg:${tintBg};--c-box-border:${tintBorder};--c-box-label:${brand};--c-section-title:${brand};--c-total-line:${brand};`
+    : `--c-title:#1A202C;--c-underline:#1A202C;--c-hl-border:#1A202C;--c-hl-bg:transparent;--c-hl-text:#1A202C;--c-th-bg:#F8F9FA;--c-th-text:#718096;--c-th-border:#E2E8F0;--c-box-bg:#F8F9FA;--c-box-border:#E2E8F0;--c-box-label:#718096;--c-section-title:#1A202C;--c-total-line:#1A202C;`;
+
   const html = `<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <style>
+  :root { ${themeVars} }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
@@ -199,19 +231,21 @@ app.post('/generate-pdf', async (req, res) => {
     text-align: center;
     margin-bottom: 24px;
     letter-spacing: 4px;
+    color: var(--c-title);
   }
   .meta {
     display: flex;
     justify-content: space-between;
     margin-bottom: 16px;
   }
-  .client-block { display: flex; flex-direction: column; justify-content: flex-end; }
+  .client-block { display: flex; flex-direction: column; justify-content: flex-start; padding-top: 30px; }
   .client-name {
     font-size: 20px;
     font-weight: bold;
-    border-bottom: 2px solid #1A202C;
+    border-bottom: 2px solid var(--c-underline);
     padding-bottom: 4px;
     min-width: 220px;
+    text-align: center;
   }
   .client-name span { font-size: 14px; font-weight: normal; margin-left: 4px; }
   .greeting {
@@ -263,7 +297,8 @@ app.post('/generate-pdf', async (req, res) => {
     display: block;
   }
   .total-highlight {
-    border: 2px solid #1A202C;
+    border: 2px solid var(--c-hl-border);
+    background: var(--c-hl-bg);
     border-radius: 4px;
     padding: 10px 20px;
     margin-bottom: 20px;
@@ -275,15 +310,17 @@ app.post('/generate-pdf', async (req, res) => {
     font-size: 14px;
     font-weight: bold;
     min-width: 100px;
+    color: var(--c-hl-text);
   }
   .total-highlight-value {
     font-size: 22px;
     font-weight: bold;
     letter-spacing: 1px;
+    color: var(--c-hl-text);
   }
   .project-info {
-    background: #F8F9FA;
-    border: 1px solid #E2E8F0;
+    background: var(--c-box-bg);
+    border: 1px solid var(--c-box-border);
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 20px;
@@ -293,11 +330,11 @@ app.post('/generate-pdf', async (req, res) => {
     font-size: 13px;
     padding: 2px 0;
   }
-  .project-field-label { min-width: 110px; color: #718096; }
+  .project-field-label { min-width: 110px; color: var(--c-box-label); }
   .project-field-value { color: #1A202C; }
   .remarks-lower {
-    background: #F8F9FA;
-    border: 1px solid #E2E8F0;
+    background: var(--c-box-bg);
+    border: 1px solid var(--c-box-border);
     border-radius: 8px;
     padding: 12px 16px;
     margin-top: 20px;
@@ -312,12 +349,12 @@ app.post('/generate-pdf', async (req, res) => {
     margin-bottom: 16px;
   }
   th {
-    background: #F8F9FA;
-    border: 1px solid #E2E8F0;
+    background: var(--c-th-bg);
+    border: 1px solid var(--c-th-border);
     padding: 8px 10px;
     text-align: left;
     font-weight: 500;
-    color: #718096;
+    color: var(--c-th-text);
     font-size: 12px;
   }
   td {
@@ -343,17 +380,18 @@ app.post('/generate-pdf', async (req, res) => {
   .total-value { min-width: 100px; text-align: right; }
   .bank-info {
     margin-top: 20px;
-    border: 1px solid #E2E8F0;
-    border-radius: 6px;
+    border: 1px solid var(--c-box-border);
+    border-radius: 0;
     padding: 12px 16px;
-    background: #F8F9FA;
+    background: var(--c-box-bg);
   }
   .bank-info-title {
     font-size: 14px;
     font-weight: bold;
     margin-bottom: 6px;
-    border-bottom: 1px solid #E2E8F0;
+    border-bottom: 1px solid var(--c-box-border);
     padding-bottom: 4px;
+    color: var(--c-section-title);
   }
   .bank-info-body {
     font-size: 14px;
@@ -402,19 +440,19 @@ app.post('/generate-pdf', async (req, res) => {
 
   <div class="totals">
     ${totalRowsHtml}
-    <div class="total-row" style="font-size:15px;font-weight:bold;color:#1A202C;border-top:2px solid #1A202C;padding-top:8px;margin-top:4px;">
+    <div class="total-row" style="font-size:15px;font-weight:bold;color:var(--c-total-line);border-top:2px solid var(--c-total-line);padding-top:8px;margin-top:4px;">
       <span class="total-label">合計</span>
       <span class="total-value">¥${grandTotal.toLocaleString()}</span>
     </div>
   </div>
+
+  ${remarksLowerBlockHtml}
 
   ${(title === '請求書' && company.bankInfo) ? `
   <div class="bank-info">
     <div class="bank-info-title">お振込先</div>
     <div class="bank-info-body">${company.bankInfo.replace(/\n/g, '<br>')}</div>
   </div>` : ''}
-
-  ${remarksLowerBlockHtml}
 </body>
 </html>`;
 
