@@ -55,7 +55,7 @@ function buildTaxGroups(items) {
 
 // PDF生成エンドポイント
 app.post('/generate-pdf', async (req, res) => {
-  const { clientName, items, docType, companyInfo, projectFields, remarksLower, issueDate: issueDateInput, honorific: honorificInput, columnLabels } = req.body;
+  const { clientName, items, docType, companyInfo, projectFields, remarksLower, issueDate: issueDateInput, honorific: honorificInput, columnLabels, invoiceNo } = req.body;
 
   if (!clientName || !items) {
     return res.status(400).json({ error: 'clientName と items は必須です' });
@@ -259,6 +259,12 @@ app.post('/generate-pdf', async (req, res) => {
     color: #1A202C;
     line-height: 1.7;
   }
+  .invoice-no-line {
+    font-size: 12px;
+    color: #718096;
+    margin-bottom: 3px;
+    text-align: right;
+  }
   .issue-date-line {
     font-size: 13px;
     color: #1A202C;
@@ -415,6 +421,7 @@ app.post('/generate-pdf', async (req, res) => {
       <div class="greeting">下記の通りご請求申し上げます。</div>
     </div>
     <div class="company-side">
+      ${(invoiceNo && String(invoiceNo).trim()) ? `<div class="invoice-no-line">請求書番号：${String(invoiceNo).trim()}</div>` : ''}
       <div class="issue-date-line">請求日：${issueDate}</div>
       ${companyBlockHtml}
     </div>
