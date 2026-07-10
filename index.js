@@ -111,11 +111,9 @@ app.post('/generate-pdf', async (req, res) => {
   }
 
   const companyBlockHtml = `
-    <div class="company-side">
-      ${company.name ? `<div class="company-name">${company.name}</div>` : ''}
-      ${companyFieldsHtml}
-      ${sealHtml}
-    </div>`;
+    ${company.name ? `<div class="company-name">${company.name}</div>` : ''}
+    ${companyFieldsHtml}
+    ${sealHtml}`;
 
   // 案件情報・送付先情報ブロック（会社情報とは独立、クライアント名の下に表示）
   // 項目名（label）が空欄でも、内容（value）があればフリー記入として表示する
@@ -207,9 +205,12 @@ app.post('/generate-pdf', async (req, res) => {
   const brand = toHex(brandRgb);
   const tintBg = toHex(mix(brandRgb, white, 0.90));     // うすい背景色
   const tintBorder = toHex(mix(brandRgb, white, 0.65)); // うすい枠線色
+  // 案B（左アクセントライン）用のCSS変数。
+  // --c-brand: 主アクセント（縦バー・合計帯・見出し・明細ヘッダー下線・合計上線）
+  // --c-band-bg: 税込合計帯の背景（薄い地色）  --c-subbar: 補助セクションの左バー（薄色）
   const themeVars = themeMode === 'color'
-    ? `--c-underline:${brand};--c-hl-border:${brand};--c-hl-bg:${tintBg};--c-hl-text:${brand};--c-th-bg:${brand};--c-th-text:#ffffff;--c-th-border:${brand};--c-box-bg:${tintBg};--c-box-border:${tintBorder};--c-box-label:${brand};--c-section-title:${brand};--c-total-line:${brand};--c-free-bg:#ffffff;--c-free-border:${brand};--c-free-label:${brand};`
-    : `--c-underline:#1A202C;--c-hl-border:#1A202C;--c-hl-bg:transparent;--c-hl-text:#1A202C;--c-th-bg:#F8F9FA;--c-th-text:#718096;--c-th-border:#E2E8F0;--c-box-bg:#F8F9FA;--c-box-border:#E2E8F0;--c-box-label:#718096;--c-section-title:#1A202C;--c-total-line:#1A202C;--c-free-bg:#F8F9FA;--c-free-border:#E2E8F0;--c-free-label:#718096;`;
+    ? `--c-brand:${brand};--c-band-bg:${tintBg};--c-subbar:${tintBorder};--c-th-text:#718096;--c-label:#718096;`
+    : `--c-brand:#2C3E50;--c-band-bg:#F4F6F8;--c-subbar:#CBD5E0;--c-th-text:#718096;--c-label:#718096;`;
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -226,48 +227,51 @@ app.post('/generate-pdf', async (req, res) => {
     width: 794px;
   }
   h1 {
-    font-size: 22px;
+    font-size: 23px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 24px;
-    letter-spacing: 4px;
+    margin-bottom: 26px;
+    letter-spacing: 6px;
     color: #1A202C;
   }
   .meta {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 16px;
+    align-items: flex-start;
+    margin-bottom: 24px;
   }
-  .client-block { display: flex; flex-direction: column; justify-content: flex-start; padding-top: 30px; }
+  .client-block { display: flex; flex-direction: column; }
+  /* 取引先名：下線ではなく左アクセントバー（案B） */
   .client-name {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: bold;
-    border-bottom: 2px solid var(--c-underline);
-    padding-bottom: 4px;
+    border-left: 4px solid var(--c-brand);
+    padding: 4px 0 4px 14px;
     min-width: 220px;
-    text-align: center;
+    text-align: left;
   }
-  .client-name span { font-size: 14px; font-weight: normal; margin-left: 4px; }
+  .client-name span { font-size: 13px; font-weight: normal; margin-left: 6px; }
   .greeting {
-    font-size: 13px;
+    font-size: 12px;
     margin-top: 12px;
-    color: #1A202C;
+    padding-left: 14px;
+    color: #718096;
   }
   .company-side {
     text-align: right;
     font-size: 12px;
     color: #1A202C;
-    line-height: 1.7;
+    line-height: 1.75;
   }
   .invoice-no-line {
     font-size: 12px;
-    color: #1A202C;
-    margin-bottom: 3px;
+    color: #718096;
+    margin-bottom: 2px;
     text-align: right;
   }
   .issue-date-line {
-    font-size: 13px;
-    color: #1A202C;
+    font-size: 12px;
+    color: #718096;
     margin-bottom: 6px;
     text-align: right;
   }
@@ -302,52 +306,49 @@ app.post('/generate-pdf', async (req, res) => {
     margin-top: 8px;
     display: block;
   }
+  /* 税込合計：囲みをやめ、左バー＋薄い地色の帯（案B） */
   .total-highlight {
-    border: 2px solid var(--c-hl-border);
-    background: var(--c-hl-bg);
-    border-radius: 4px;
-    padding: 10px 20px;
-    margin-bottom: 20px;
+    border-left: 4px solid var(--c-brand);
+    background: var(--c-band-bg);
+    padding: 12px 18px;
+    margin-bottom: 22px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
   }
   .total-highlight-label {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
-    min-width: 100px;
-    color: var(--c-hl-text);
+    color: var(--c-brand);
   }
   .total-highlight-value {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     letter-spacing: 1px;
-    color: var(--c-hl-text);
+    color: var(--c-brand);
   }
+  /* 自由記入欄（上段）：囲みをやめ、薄い左バーのみ（案B） */
   .project-info {
-    background: var(--c-free-bg);
-    border: 1px solid var(--c-free-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
+    border-left: 4px solid var(--c-subbar);
+    padding-left: 14px;
+    margin-bottom: 22px;
   }
   .project-field-row {
     display: flex;
     font-size: 13px;
     padding: 2px 0;
   }
-  .project-field-label { min-width: 110px; color: var(--c-free-label); }
+  .project-field-label { min-width: 110px; color: var(--c-label); }
   .project-field-value { color: #1A202C; }
+  /* 自由記入欄（下段）：囲みをやめ、薄い左バーのみ（案B） */
   .remarks-lower {
-    background: var(--c-free-bg);
-    border: 1px solid var(--c-free-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: 20px;
+    border-left: 4px solid var(--c-subbar);
+    padding-left: 14px;
+    margin-top: 22px;
     margin-bottom: 0;
-    font-size: 13px;
+    font-size: 12.5px;
     color: #1A202C;
-    line-height: 1.6;
+    line-height: 1.7;
   }
   table {
     width: 100%;
@@ -355,10 +356,10 @@ app.post('/generate-pdf', async (req, res) => {
     border-collapse: collapse;
     margin-bottom: 16px;
   }
+  /* 明細：外枠・縦罫線をやめ、ヘッダー下線＋行下線のみ（案B） */
   th {
-    background: var(--c-th-bg);
-    border: 1px solid var(--c-th-border);
-    padding: 8px 5px;
+    border-bottom: 2px solid var(--c-brand);
+    padding: 7px 5px;
     text-align: center;
     font-weight: 500;
     color: var(--c-th-text);
@@ -369,8 +370,8 @@ app.post('/generate-pdf', async (req, res) => {
     overflow-wrap: anywhere;
   }
   td {
-    border: 1px solid #E2E8F0;
-    padding: 8px 6px;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 9px 6px;
     font-size: 13px;
     overflow-wrap: anywhere;
   }
@@ -379,34 +380,32 @@ app.post('/generate-pdf', async (req, res) => {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
-    margin-bottom: 20px;
+    gap: 5px;
+    margin-bottom: 0;
   }
   .total-row {
     display: flex;
     gap: 24px;
-    font-size: 13px;
+    font-size: 12.5px;
     color: #718096;
   }
   .total-label { min-width: 140px; text-align: right; }
   .total-value { min-width: 100px; text-align: right; }
+  /* 振込先：囲みをやめ、薄い左バー＋小見出し（案B） */
   .bank-info {
-    margin-top: 20px;
-    border: 1px solid var(--c-box-border);
-    border-radius: 0;
-    padding: 12px 16px;
-    background: var(--c-box-bg);
+    margin-top: 22px;
+    border-left: 4px solid var(--c-subbar);
+    padding-left: 14px;
   }
   .bank-info-title {
-    font-size: 14px;
+    font-size: 11px;
     font-weight: bold;
-    margin-bottom: 6px;
-    border-bottom: 1px solid var(--c-box-border);
-    padding-bottom: 4px;
-    color: var(--c-section-title);
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    color: var(--c-brand);
   }
   .bank-info-body {
-    font-size: 14px;
+    font-size: 13.5px;
     line-height: 1.8;
     color: #1A202C;
   }
@@ -453,7 +452,7 @@ app.post('/generate-pdf', async (req, res) => {
 
   <div class="totals">
     ${totalRowsHtml}
-    <div class="total-row" style="font-size:15px;font-weight:bold;color:var(--c-total-line);border-top:2px solid var(--c-total-line);padding-top:8px;margin-top:4px;">
+    <div class="total-row" style="font-size:15px;font-weight:bold;color:#1A202C;border-top:2px solid var(--c-brand);padding-top:8px;margin-top:4px;">
       <span class="total-label">合計</span>
       <span class="total-value">¥${grandTotal.toLocaleString()}</span>
     </div>
