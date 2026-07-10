@@ -261,7 +261,7 @@ app.post('/generate-pdf', async (req, res) => {
   }
   .invoice-no-line {
     font-size: 12px;
-    color: #718096;
+    color: #1A202C;
     margin-bottom: 3px;
     text-align: right;
   }
