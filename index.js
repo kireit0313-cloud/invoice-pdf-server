@@ -132,19 +132,23 @@ app.post('/generate-pdf', async (req, res) => {
       const n = chars.length;
       const cols = Math.ceil(Math.sqrt(n));
       const maxRows = Math.ceil(n / cols);
-      let box = Math.max(cols, maxRows) * 20 + 12;
-      if (box > 84) box = 84;
-      if (box < 46) box = 46;
+      const box = 80;           // 角印サイズは固定（文字数によらず一定）
       const inner = box - 12;
       const cellH = inner / maxRows; // 1文字セルの高さ（固定）＝上そろえの基準
       const fs = (Math.min(inner / cols, cellH) * 0.94).toFixed(1);
       // 右の列から1列＝maxRows文字ずつ完全に埋め、余りを最後（左）の列へ（例：7文字→あいう／えおか／き）
+      // 長音符・ダッシュ（ー等）は縦書き風に90°回転して縦棒にする（例：ローソンの「ー」）
+      const vertRe = /[ー−—―－‐−]/;
       let idx = 0, colsHtml = '';
       for (let c = 0; c < cols; c++) {
         const cnt = Math.min(maxRows, n - idx);
         if (cnt <= 0) break;
         let spans = '';
-        for (let k = 0; k < cnt; k++) spans += `<span class="seal-ch" style="height:${cellH.toFixed(1)}px">${chars[idx++]}</span>`;
+        for (let k = 0; k < cnt; k++) {
+          const ch = chars[idx++];
+          const rot = vertRe.test(ch) ? ' seal-ch-vert' : '';
+          spans += `<span class="seal-ch${rot}" style="height:${cellH.toFixed(1)}px">${ch}</span>`;
+        }
         colsHtml += `<div class="seal-col">${spans}</div>`;
       }
       sealHtml = `<div class="seal-auto" style="width:${box}px;height:${box}px"><div class="seal-inner" style="font-size:${fs}px">${colsHtml}</div></div>`;
@@ -335,6 +339,7 @@ app.post('/generate-pdf', async (req, res) => {
     font-weight: 700;
     font-family: 'Yuji Syuku', serif;
   }
+  .seal-ch-vert { transform: rotate(90deg); }
   .seal-img {
     width: 58px;
     height: 58px;
