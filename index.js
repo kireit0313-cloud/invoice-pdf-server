@@ -132,7 +132,7 @@ app.post('/generate-pdf', async (req, res) => {
       const n = chars.length;
       const cols = Math.ceil(Math.sqrt(n));
       const maxRows = Math.ceil(n / cols);
-      const box = 80;           // 角印サイズは固定（文字数によらず一定）
+      const box = 68;           // 角印サイズは固定（文字数によらず一定）
       const inner = box - 12;
       const cellH = inner / maxRows; // 1文字セルの高さ（固定）＝上そろえの基準
       const fs = (Math.min(inner / cols, cellH) * 0.94).toFixed(1);
@@ -282,7 +282,7 @@ app.post('/generate-pdf', async (req, res) => {
     align-items: flex-start;
     margin-bottom: 24px;
   }
-  .client-block { display: flex; flex-direction: column; }
+  .client-block { display: flex; flex-direction: column; padding-top: 30px; }
   /* 取引先名：下線ではなく左アクセントバー（案B） */
   .client-name {
     font-size: 19px;
