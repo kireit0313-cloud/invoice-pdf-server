@@ -65,7 +65,7 @@ app.post('/generate-pdf', async (req, res) => {
   const company = companyInfo || {};
 
   // 明細ラベル（クライアント別カスタマイズ、未指定時はデフォルト）
-  const defaultLabels = ['作業日', 'サービス名', '数量', '単価（円）', '金額（円）', '備考'];
+  const defaultLabels = ['日付', '内容', '数量', '単価（税抜）', '金額（税抜）', '備考'];
   const L = (columnLabels && columnLabels.length === 6) ? columnLabels : defaultLabels;
 
   // 明細列の表示ON/OFF（管理画面設定）。オプション列＝数量・単価・備考。
