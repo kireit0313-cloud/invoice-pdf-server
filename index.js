@@ -223,8 +223,8 @@ app.post('/generate-pdf', async (req, res) => {
     font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
     font-size: 13px;
     color: #1A202C;
-    padding: 40px;
-    width: 794px;
+    padding: 0;
+    width: 100%;
   }
   h1 {
     font-size: 23px;
@@ -409,6 +409,10 @@ app.post('/generate-pdf', async (req, res) => {
     line-height: 1.8;
     color: #1A202C;
   }
+  /* --- 複数ページ対応（明細がA4を超えたとき） --- */
+  thead { display: table-header-group; }   /* 見出し行を各ページの先頭に自動反復 */
+  tr { page-break-inside: avoid; }         /* 行を改ページ境界で上下に割らない */
+  .total-highlight, .totals, .remarks-lower, .bank-info { page-break-inside: avoid; } /* まとまりを分断しない */
 </style>
 </head>
 <body>
@@ -488,7 +492,7 @@ app.post('/generate-pdf', async (req, res) => {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: { top: '0mm', bottom: '0mm', left: '0mm', right: '0mm' }
+      margin: { top: '40px', bottom: '40px', left: '40px', right: '40px' }
     });
     await browser.close();
 
