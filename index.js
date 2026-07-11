@@ -55,7 +55,7 @@ function buildTaxGroups(items) {
 
 // PDF生成エンドポイント
 app.post('/generate-pdf', async (req, res) => {
-  const { clientName, items, docType, companyInfo, projectFields, remarksLower, issueDate: issueDateInput, honorific: honorificInput, columnLabels, invoiceNo } = req.body;
+  const { clientName, items, docType, companyInfo, projectFields, remarksLower, issueDate: issueDateInput, honorific: honorificInput, columnLabels, colFlags, invoiceNo } = req.body;
 
   if (!clientName || !items) {
     return res.status(400).json({ error: 'clientName と items は必須です' });
@@ -67,6 +67,35 @@ app.post('/generate-pdf', async (req, res) => {
   // 明細ラベル（クライアント別カスタマイズ、未指定時はデフォルト）
   const defaultLabels = ['作業日', 'サービス名', '数量', '単価（円）', '金額（円）', '備考'];
   const L = (columnLabels && columnLabels.length === 6) ? columnLabels : defaultLabels;
+
+  // 明細列の表示ON/OFF（管理画面設定）。オプション列＝数量・単価・備考。
+  // 未指定（旧クライアント）は全て表示。作業日・サービス名・金額・税率は常時表示。
+  const flags = colFlags || {};
+  const showCol = { qty: flags.qty !== false, price: flags.price !== false, remark: flags.remark !== false };
+  // 列定義（順序固定・実測済みの基準幅）。オプション列を除外し、残り幅を100%へ按分。
+  const colDefs = [
+    { key: 'date',    label: L[0],   w: 15, num: false },
+    { key: 'service', label: L[1],   w: 31, num: false },
+    { key: 'qty',     label: L[2],   w: 6,  num: true,  opt: true },
+    { key: 'price',   label: L[3],   w: 14, num: true,  opt: true },
+    { key: 'amount',  label: L[4],   w: 14, num: true },
+    { key: 'tax',     label: '税率', w: 6,  num: true },
+    { key: 'remark',  label: L[5],   w: 14, num: false, opt: true },
+  ].filter(c => !c.opt || showCol[c.key]);
+  const wSum = colDefs.reduce((a, c) => a + c.w, 0);
+  const colPct = (c) => (c.w / wSum * 100).toFixed(2);
+  const cellHtml = (item, key) => {
+    switch (key) {
+      case 'date':    return `<td>${item.workDate || ''}</td>`;
+      case 'service': return `<td>${item.service || ''}</td>`;
+      case 'qty':     return `<td class="num">${item.qty === null || item.qty === undefined ? '' : item.qty}</td>`;
+      case 'price':   return `<td class="num">${item.price === null || item.price === undefined ? '' : '¥' + Number(item.price).toLocaleString()}</td>`;
+      case 'amount':  return `<td class="num">¥${Number(item.amount || 0).toLocaleString()}</td>`;
+      case 'tax':     return `<td class="num">${Number(item.taxRate) > 0 ? Number(item.taxRate) + '%' : ''}</td>`;
+      case 'remark':  return `<td>${item.remark || ''}</td>`;
+      default:        return '';
+    }
+  };
 
   // 会社情報ブロック（社名＋並び順どおりの項目リスト）
   // 新形式：company.fields = [{label, value}, ...]（UIの並び順＝表示順）
@@ -142,13 +171,7 @@ app.post('/generate-pdf', async (req, res) => {
   // 明細行のHTML生成（税率が0または未設定のときは空欄にする）
   const itemRows = items.map(item => `
     <tr>
-      <td>${item.workDate || ''}</td>
-      <td>${item.service || ''}</td>
-      <td class="num">${item.qty === null || item.qty === undefined ? '' : item.qty}</td>
-      <td class="num">${item.price === null || item.price === undefined ? '' : '¥' + Number(item.price).toLocaleString()}</td>
-      <td class="num">¥${Number(item.amount || 0).toLocaleString()}</td>
-      <td class="num">${Number(item.taxRate) > 0 ? Number(item.taxRate) + '%' : ''}</td>
-      <td>${item.remark || ''}</td>
+      ${colDefs.map(c => cellHtml(item, c.key)).join('')}
     </tr>
   `).join('');
 
@@ -440,13 +463,7 @@ app.post('/generate-pdf', async (req, res) => {
   <table>
     <thead>
       <tr>
-        <th style="width:15%">${L[0]}</th>
-        <th style="width:31%">${L[1]}</th>
-        <th style="width:6%" class="num">${L[2]}</th>
-        <th style="width:14%" class="num">${L[3]}</th>
-        <th style="width:14%" class="num">${L[4]}</th>
-        <th style="width:6%" class="num">税率</th>
-        <th style="width:14%">${L[5]}</th>
+        ${colDefs.map(c => `<th style="width:${colPct(c)}%"${c.num ? ' class="num"' : ''}>${c.label}</th>`).join('')}
       </tr>
     </thead>
     <tbody>
