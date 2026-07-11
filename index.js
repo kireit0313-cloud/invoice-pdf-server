@@ -125,17 +125,29 @@ app.post('/generate-pdf', async (req, res) => {
     if (seal.mode === 'image' && seal.imageData) {
       sealHtml = `<img class="seal-img" src="${seal.imageData}" alt="印">`;
     } else if (company.name) {
-      // 自動生成角印：writing-mode縦書き（vertical-rl）で右→左・上→下に自動配置
-      // 自動生成角印：文字数に応じて枠を自動拡大（1マス=18px、列数=√文字数、上限80px）。
-      // フォントはマス目より小さく（列幅-3px、最大15px）して、どの文字数でも枠と文字が重ならないよう余白を確保。
-      const n = [...String(company.name)].length;
-      const grid = Math.ceil(Math.sqrt(n));
-      let box = grid * 18 + 12; // 枠 = 列数×18 + padding4×2 + border2×2
-      if (box > 80) box = 80;
-      if (box < 44) box = 44;
+      // 自動生成角印：文字をマス目いっぱいに均等配置（flexで詰めて余白を最小化）。
+      // 列は右→左、各列は上→下（縦書きの読み順）。余りは右側の列から1文字ずつ割り当て。
+      // 枠＝max(列,行)×20＋12(border3×2＋padding3×2)。フォントはセルの短辺×0.94で算出。
+      const chars = [...String(company.name)];
+      const n = chars.length;
+      const cols = Math.ceil(Math.sqrt(n));
+      const maxRows = Math.ceil(n / cols);
+      let box = Math.max(cols, maxRows) * 20 + 12;
+      if (box > 84) box = 84;
+      if (box < 46) box = 46;
       const inner = box - 12;
-      const font = Math.max(6, Math.min(15, Math.floor(inner / grid) - 3));
-      sealHtml = `<div class="seal-auto" style="width:${box}px;height:${box}px"><div class="seal-auto-text" style="font-size:${font}px">${company.name}</div></div>`;
+      const cellH = inner / maxRows; // 1文字セルの高さ（固定）＝上そろえの基準
+      const fs = (Math.min(inner / cols, cellH) * 0.94).toFixed(1);
+      // 右の列から1列＝maxRows文字ずつ完全に埋め、余りを最後（左）の列へ（例：7文字→あいう／えおか／き）
+      let idx = 0, colsHtml = '';
+      for (let c = 0; c < cols; c++) {
+        const cnt = Math.min(maxRows, n - idx);
+        if (cnt <= 0) break;
+        let spans = '';
+        for (let k = 0; k < cnt; k++) spans += `<span class="seal-ch" style="height:${cellH.toFixed(1)}px">${chars[idx++]}</span>`;
+        colsHtml += `<div class="seal-col">${spans}</div>`;
+      }
+      sealHtml = `<div class="seal-auto" style="width:${box}px;height:${box}px"><div class="seal-inner" style="font-size:${fs}px">${colsHtml}</div></div>`;
     }
   }
 
@@ -239,6 +251,9 @@ app.post('/generate-pdf', async (req, res) => {
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" rel="stylesheet">
 <style>
   :root { ${themeVars} }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -300,26 +315,25 @@ app.post('/generate-pdf', async (req, res) => {
   }
   .company-name { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
   .seal-auto {
-    border: 2px solid #C0392B;
+    border: 3px solid #C0392B;
     border-radius: 3px;
     margin-left: auto;
     margin-top: 8px;
-    padding: 4px;
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
+    padding: 3px;
+    box-sizing: border-box;
+    background: #fff;
     overflow: hidden;
   }
-  .seal-auto-text {
-    writing-mode: vertical-rl;
-    text-orientation: upright;
-    text-align: start;
+  .seal-inner { display: flex; flex-direction: row-reverse; width: 100%; height: 100%; }
+  .seal-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+  .seal-ch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
     color: #C0392B;
-    font-weight: bold;
-    font-family: serif;
-    line-height: 1.0;
-    letter-spacing: 0;
-    height: 100%;
+    font-weight: 700;
+    font-family: 'Yuji Syuku', serif;
   }
   .seal-img {
     width: 58px;
@@ -506,6 +520,8 @@ app.post('/generate-pdf', async (req, res) => {
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
+    // Webフォント（角印のYuji Syuku等）の読み込み完了を待ってからPDF化
+    try { await page.evaluate(() => document.fonts.ready); } catch (_) {}
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
