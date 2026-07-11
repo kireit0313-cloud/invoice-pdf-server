@@ -398,14 +398,14 @@ app.post('/generate-pdf', async (req, res) => {
     padding-left: 14px;
   }
   .bank-info-title {
-    font-size: 11px;
+    font-size: 13.2px;
     font-weight: bold;
     letter-spacing: 1px;
     margin-bottom: 5px;
     color: var(--c-brand);
   }
   .bank-info-body {
-    font-size: 13.5px;
+    font-size: 16.2px;
     line-height: 1.8;
     color: #1A202C;
   }
