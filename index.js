@@ -395,7 +395,8 @@ app.post('/generate-pdf', async (req, res) => {
   table {
     width: 100%;
     table-layout: fixed;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin-bottom: 16px;
   }
   /* 明細：外枠・縦罫線をやめ、ヘッダー下線＋行下線のみ（案B） */
