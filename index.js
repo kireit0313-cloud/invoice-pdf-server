@@ -525,9 +525,21 @@ app.post('/generate-pdf', async (req, res) => {
       ]
     });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    // Webフォント（角印のYuji Syuku等）の読み込み完了を待ってからPDF化
-    try { await page.evaluate(() => document.fonts.ready); } catch (_) {}
+    // networkidle0＝フォント等の全リソース読込完了を待つ。ただしGoogle Fontsが「失敗」でなく
+    // 「無応答（ハング）」の場合に全体が止まらないよう15秒で打ち切り、フォールバック書体で続行する
+    // （setContentのタイムアウトはHTML自体は適用済みで、待ちだけが打ち切られる）
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 });
+    } catch (e) {
+      console.warn('setContentの読込待ちを打ち切り（フォント等はフォールバックで続行）:', e.message);
+    }
+    // Webフォント（角印のYuji Syuku等）の読み込み完了を待ってからPDF化（こちらも最大3秒で打ち切り）
+    try {
+      await page.evaluate(() => Promise.race([
+        document.fonts.ready,
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ]));
+    } catch (_) {}
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,

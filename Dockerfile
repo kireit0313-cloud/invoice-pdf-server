@@ -44,7 +44,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --omit=dev
+# npm ci＝package-lock.jsonを厳密に適用（矛盾があればビルド失敗で気づける。npm installはlockを書き換えて進んでしまう）
+RUN npm ci --omit=dev
 COPY . .
 
 EXPOSE 8080
