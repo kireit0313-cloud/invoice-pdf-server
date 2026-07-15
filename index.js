@@ -298,32 +298,32 @@ app.post('/generate-pdf', async (req, res) => {
     min-width: 220px;
     text-align: left;
   }
-  .client-name span { font-size: 13px; font-weight: normal; margin-left: 6px; }
+  .client-name span { font-size: 14px; font-weight: normal; margin-left: 6px; }
   .greeting {
-    font-size: 12px;
+    font-size: 13px;
     margin-top: 12px;
     padding-left: 14px;
     color: #718096;
   }
   .company-side {
     text-align: right;
-    font-size: 12px;
+    font-size: 14px;
     color: #1A202C;
     line-height: 1.75;
   }
   .invoice-no-line {
-    font-size: 12px;
+    font-size: 14px;
     color: #718096;
     margin-bottom: 2px;
     text-align: right;
   }
   .issue-date-line {
-    font-size: 12px;
+    font-size: 14px;
     color: #718096;
     margin-bottom: 6px;
     text-align: right;
   }
-  .company-name { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
+  .company-name { font-size: 15px; font-weight: bold; margin-bottom: 2px; }
   .seal-auto {
     border: 3px solid #C0392B;
     border-radius: 3px;
@@ -365,7 +365,7 @@ app.post('/generate-pdf', async (req, res) => {
     justify-content: space-between;
   }
   .total-highlight-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: bold;
     color: var(--c-brand);
   }
@@ -384,7 +384,7 @@ app.post('/generate-pdf', async (req, res) => {
   .project-field-row {
     display: flex;
     align-items: baseline; /* ラベル（全角）と値をベースラインで揃える。半角数字が上にずれるのを防ぐ */
-    font-size: 13px;
+    font-size: 14px;
     padding: 2px 0;
   }
   .project-field-label { min-width: 110px; color: var(--c-label); }
@@ -395,7 +395,7 @@ app.post('/generate-pdf', async (req, res) => {
     padding-left: 14px;
     margin-top: 22px;
     margin-bottom: 0;
-    font-size: 12.5px;
+    font-size: 14px;
     color: #1A202C;
     line-height: 1.7;
   }
@@ -413,7 +413,7 @@ app.post('/generate-pdf', async (req, res) => {
     text-align: center;
     font-weight: 500;
     color: var(--c-th-text);
-    font-size: 11px;
+    font-size: 14px;
     line-height: 1.25;
     letter-spacing: -0.2px;
     word-break: keep-all;
@@ -422,7 +422,7 @@ app.post('/generate-pdf', async (req, res) => {
   td {
     border-bottom: 1px solid #E2E8F0;
     padding: 9px 6px;
-    font-size: 13px;
+    font-size: 15px;
     overflow-wrap: anywhere;
   }
   td.num { text-align: right; }
@@ -436,7 +436,7 @@ app.post('/generate-pdf', async (req, res) => {
   .total-row {
     display: flex;
     gap: 24px;
-    font-size: 12.5px;
+    font-size: 15px;
     color: #718096;
   }
   .total-label { min-width: 140px; text-align: right; }
@@ -448,7 +448,7 @@ app.post('/generate-pdf', async (req, res) => {
     padding-left: 14px;
   }
   .bank-info-title {
-    font-size: 13.2px;
+    font-size: 14px;
     font-weight: bold;
     letter-spacing: 1px;
     margin-bottom: 5px;
@@ -500,7 +500,7 @@ app.post('/generate-pdf', async (req, res) => {
 
   <div class="totals">
     ${totalRowsHtml}
-    <div class="total-row" style="font-size:15px;font-weight:bold;color:#1A202C;border-top:2px solid var(--c-brand);padding-top:8px;margin-top:4px;">
+    <div class="total-row" style="font-size:16px;font-weight:bold;color:#1A202C;border-top:2px solid var(--c-brand);padding-top:8px;margin-top:4px;">
       <span class="total-label">合計</span>
       <span class="total-value">¥${grandTotal.toLocaleString()}</span>
     </div>
