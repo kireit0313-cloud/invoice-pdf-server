@@ -383,6 +383,7 @@ app.post('/generate-pdf', async (req, res) => {
   }
   .project-field-row {
     display: flex;
+    align-items: baseline; /* ラベル（全角）と値をベースラインで揃える。半角数字が上にずれるのを防ぐ */
     font-size: 13px;
     padding: 2px 0;
   }
