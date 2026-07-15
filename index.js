@@ -61,8 +61,11 @@ app.post('/generate-pdf', async (req, res) => {
     return res.status(400).json({ error: 'clientName と items は必須です' });
   }
 
-  const title = docType === '見積書' ? '見積書' : '請求書';
   const company = companyInfo || {};
+  // 請求書PDFのタイトルはクライアント単位の共通設定（請求書／ご請求書）。
+  // 見積書はdocTypeで別扱い（将来のestimate-builder用）。
+  const invoiceTitle = (company.invoiceTitle === 'ご請求書') ? 'ご請求書' : '請求書';
+  const title = docType === '見積書' ? '見積書' : invoiceTitle;
 
   // 明細ラベル（クライアント別カスタマイズ、未指定時はデフォルト）
   const defaultLabels = ['日付', '内容', '数量', '単価（税抜）', '金額（税抜）', '備考'];
@@ -113,7 +116,10 @@ app.post('/generate-pdf', async (req, res) => {
     .map(f => {
       const label = (f.label || '').trim();
       const value = String(f.value).replace(/\n/g, '<br>');
-      return `<div>${label ? label + '：' : ''}${value}</div>`;
+      // 郵便番号マーク「〒」はコロンを付けず「〒100-0001」の形で表示。
+      // それ以外の項目名は「項目名：値」、空欄は値のみ。
+      const head = label === '〒' ? '〒' : (label ? label + '：' : '');
+      return `<div>${head}${value}</div>`;
     })
     .join('');
 
@@ -501,7 +507,7 @@ app.post('/generate-pdf', async (req, res) => {
 
   ${remarksLowerBlockHtml}
 
-  ${(title === '請求書' && company.bankInfo) ? `
+  ${(docType !== '見積書' && company.bankInfo) ? `
   <div class="bank-info">
     <div class="bank-info-title">お振込先</div>
     <div class="bank-info-body">${company.bankInfo.replace(/\n/g, '<br>')}</div>
